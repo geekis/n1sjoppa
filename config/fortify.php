@@ -161,9 +161,12 @@ return [
     */
 
     'features' => [
+        // Anyone may register, but a new account is "pending" and can see/do nothing
+        // until an admin approves it and grants permissions (see EnsureApproved).
         Features::registration(),
         Features::resetPasswords(),
-        Features::emailVerification(),
+        // Email verification intentionally disabled — approval is the gate instead.
+        // Features::emailVerification(),
         Features::twoFactorAuthentication([
             'confirm' => true,
             'confirmPassword' => true,

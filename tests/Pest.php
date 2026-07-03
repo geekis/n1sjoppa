@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +46,41 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Ensure roles + permissions exist for the current (refreshed) test database.
+ */
+function seedRolesAndPermissions(): void
 {
-    // ..
+    (new RolesAndPermissionsSeeder)->run();
+}
+
+/**
+ * Create an approved admin user (all permissions via the admin role).
+ */
+function adminUser(): User
+{
+    seedRolesAndPermissions();
+
+    $user = User::factory()->create(['approved_at' => now()]);
+    $user->assignRole('admin');
+
+    return $user;
+}
+
+/**
+ * Create an approved user with the given direct permissions.
+ *
+ * @param  array<int, string>  $permissions
+ */
+function approvedUser(array $permissions = []): User
+{
+    seedRolesAndPermissions();
+
+    $user = User::factory()->create(['approved_at' => now()]);
+
+    if ($permissions !== []) {
+        $user->syncPermissions($permissions);
+    }
+
+    return $user;
 }

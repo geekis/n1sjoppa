@@ -79,10 +79,35 @@ the name-select screen; picking a name starts a kiosk session (no device login).
 
 ### Admin login (seeded)
 
-- **Email:** `admin@n1.is`
-- **Password:** `password`
+- **Email:** `admin@n1.is` · **Password:** `password`
+- **Email:** `egill@eigind.is` · **Password:** `admin`
 
-Change these before any real use.
+Both are seeded as **approved admins** (full permissions). Change these before any real use.
+
+## Accounts, approval & permissions
+
+The back-office uses Spatie roles/permissions with an **approval gate**:
+
+- **Anyone can register** at `/register`, but a new account is **pending** — it can
+  see and do nothing until an admin approves it. Pending users land on `/pending`.
+- **Email verification is disabled** (approval is the gate instead). Passwords need
+  only **6+ characters**.
+- **Permissions:** `view reports`, `manage products`, `manage categories`,
+  `manage kiosk staff`, `manage users`. The **admin** role holds all of them.
+- **Admin › Notendur** (`/admin/users`, needs `manage users`): approve/revoke
+  accounts, grant the admin role or individual permissions, and create users
+  directly (auto-approved). The sidebar and each admin page are gated per
+  permission; `/admin` sends you to the first page you can access.
+
+### Create an admin from the CLI
+
+```bash
+php artisan admin:create                       # interactive (prompts, hidden password)
+php artisan admin:create egill@eigind.is --name=Egill --password='STRONG_PW'
+```
+
+Creates (or updates) the user, marks them **approved**, and assigns the **admin**
+role. Safe to re-run. On a fresh install it seeds roles/permissions automatically.
 
 ## How it works
 

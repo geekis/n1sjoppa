@@ -12,17 +12,39 @@ it('redirects guests away from admin', function () {
     $this->get(route('admin.products'))->assertRedirect(route('login'));
 });
 
-it('renders admin pages for authenticated users', function () {
-    $this->actingAs(User::factory()->create());
+it('renders admin pages for an approved admin', function () {
+    $this->actingAs(adminUser());
 
     $this->get(route('admin.reports'))->assertOk();
     $this->get(route('admin.products'))->assertOk();
     $this->get(route('admin.categories'))->assertOk();
     $this->get(route('admin.staff'))->assertOk();
+    $this->get(route('admin.users'))->assertOk();
+});
+
+it('sends an unapproved user to the pending page', function () {
+    seedRolesAndPermissions();
+    $this->actingAs(User::factory()->create(['approved_at' => null]));
+
+    $this->get(route('admin.reports'))->assertRedirect(route('pending'));
+});
+
+it('blocks an approved user from pages they lack permission for', function () {
+    $this->actingAs(approvedUser(['view reports']));
+
+    $this->get(route('admin.reports'))->assertOk();
+    $this->get(route('admin.products'))->assertForbidden();
+    $this->get(route('admin.users'))->assertForbidden();
+});
+
+it('lands a user on their first allowed page from /admin', function () {
+    $this->actingAs(approvedUser(['manage products']));
+
+    $this->get('/admin')->assertRedirect(route('admin.products'));
 });
 
 it('creates a product through the admin form', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(adminUser());
     $category = Category::factory()->create();
 
     Livewire::test('pages::admin.products')
@@ -41,7 +63,7 @@ it('creates a product through the admin form', function () {
 });
 
 it('validates required product fields', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(adminUser());
 
     Livewire::test('pages::admin.products')
         ->call('create')
@@ -51,7 +73,7 @@ it('validates required product fields', function () {
 });
 
 it('toggles product active state', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(adminUser());
     $product = Product::factory()->create(['is_active' => true]);
 
     Livewire::test('pages::admin.products')
@@ -61,7 +83,7 @@ it('toggles product active state', function () {
 });
 
 it('sets the daily kiosk PIN manually', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(adminUser());
 
     Livewire::test('pages::admin.staff')
         ->set('pinInput', '4821')
@@ -72,7 +94,7 @@ it('sets the daily kiosk PIN manually', function () {
 });
 
 it('rejects a PIN that is not 4 digits', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(adminUser());
 
     Livewire::test('pages::admin.staff')
         ->set('pinInput', '12')
@@ -83,7 +105,7 @@ it('rejects a PIN that is not 4 digits', function () {
 });
 
 it('generates a random 4-digit daily PIN', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(adminUser());
 
     Livewire::test('pages::admin.staff')->call('generatePin');
 
@@ -92,7 +114,7 @@ it('generates a random 4-digit daily PIN', function () {
 });
 
 it('deactivates staff rather than deleting', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(adminUser());
     $staff = Staff::factory()->create(['is_active' => true]);
 
     Livewire::test('pages::admin.staff')
@@ -103,7 +125,7 @@ it('deactivates staff rather than deleting', function () {
 });
 
 it('deletes a product and keeps sale history via snapshot', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(adminUser());
     $product = Product::factory()->create(['name' => 'Pylsa', 'price' => 550]);
     $item = SaleItem::factory()->create([
         'product_id' => $product->id,
@@ -121,7 +143,7 @@ it('deletes a product and keeps sale history via snapshot', function () {
 });
 
 it('deletes an empty category', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(adminUser());
     $category = Category::factory()->create();
 
     Livewire::test('pages::admin.categories')->call('delete', $category->id);
@@ -130,7 +152,7 @@ it('deletes an empty category', function () {
 });
 
 it('refuses to delete a category that still has products', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(adminUser());
     $category = Category::factory()->create();
     Product::factory()->for($category)->create();
 
@@ -140,7 +162,7 @@ it('refuses to delete a category that still has products', function () {
 });
 
 it('creates a category through the admin form', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(adminUser());
 
     Livewire::test('pages::admin.categories')
         ->call('create')

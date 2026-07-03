@@ -18,18 +18,16 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav>
-                <flux:sidebar.item icon="chart-bar" :href="route('admin.reports')" :current="request()->routeIs('admin.reports')" wire:navigate>
-                    Skýrslur
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="shopping-bag" :href="route('admin.products')" :current="request()->routeIs('admin.products')" wire:navigate>
-                    Vörur
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="tag" :href="route('admin.categories')" :current="request()->routeIs('admin.categories')" wire:navigate>
-                    Flokkar
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="users" :href="route('admin.staff')" :current="request()->routeIs('admin.staff')" wire:navigate>
-                    Starfsfólk
-                </flux:sidebar.item>
+                @foreach (\App\Support\AdminNavigation::allowed(auth()->user()) as $item)
+                    <flux:sidebar.item
+                        :icon="$item['icon']"
+                        :href="route($item['route'])"
+                        :current="request()->routeIs($item['route'])"
+                        wire:navigate
+                    >
+                        {{ $item['label'] }}
+                    </flux:sidebar.item>
+                @endforeach
             </flux:sidebar.nav>
 
             <flux:spacer />
